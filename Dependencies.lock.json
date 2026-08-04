@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "name": "Sikarugir wrapper template",
+      "version": "1.0.11",
+      "file": "Template-1.0.11.tar.xz",
+      "url": "https://github.com/Sikarugir-App/Wrapper/releases/download/v1.0/Template-1.0.11.tar.xz",
+      "sha256": "9fa15479e7ff6abd99c1d07be285fb95f41fc6991586502427152b1f7d6ccb8a"
+    },
+    {
+      "name": "Sikarugir Wine engine",
+      "version": "WS12WineSikarugir10.0_6",
+      "file": "WS12WineSikarugir10.0_6.tar.xz",
+      "url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineSikarugir10.0_6.tar.xz",
+      "sha256": "9da7ee0cbf386522f3a9906943726d9c3c125dbbd9ab120e3cde80e88d6091b2"
+    },
+    {
+      "name": "7-Zip archive helper",
+      "version": "26.02",
+      "file": "7z2602-mac.tar.xz",
+      "url": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602-mac.tar.xz",
+      "sha256": "1cf6760579502f87e591ff5c73a005ec50b3e4d6f507e8b038382d563c3175b9"
+    }
+  ]
+}

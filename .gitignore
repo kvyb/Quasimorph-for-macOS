@@ -1,0 +1,15 @@
+.build/
+.swiftpm/
+.DS_Store
+*.dmg
+*.rar
+*.7z
+*.zip
+*.exe
+*.dll
+Quasimorph.app/
+BUILD-REPORT.txt
+Dependencies/
+dist/
+test-cache/
+test-output/

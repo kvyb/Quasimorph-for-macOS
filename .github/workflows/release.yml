@@ -1,0 +1,31 @@
+name: Release CLI
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: swift test
+      - name: Confirm no game content is present
+        run: ./scripts/check-no-game-content.sh
+      - name: Build universal CLI
+        run: |
+          swift build -c release --arch arm64 --arch x86_64
+          mkdir -p dist/Quasimorph-for-macOS
+          cp "$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/quasimorph-macos" dist/Quasimorph-for-macOS/
+          codesign --force --sign - dist/Quasimorph-for-macOS/quasimorph-macos
+          cp README.md LICENSE THIRD_PARTY_NOTICES.md dist/Quasimorph-for-macOS/
+          COPYFILE_DISABLE=1 ditto -c -k --keepParent dist/Quasimorph-for-macOS Quasimorph-for-macOS.zip
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Quasimorph-for-macOS.zip
+          generate_release_notes: true
