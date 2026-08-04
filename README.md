@@ -4,6 +4,12 @@ Builds a macOS app from **your own Windows copy** of Quasimorph.
 
 No game files are included here. Nothing is uploaded.
 
+## It works
+
+![Quasimorph 1.0 running in the generated macOS wrapper](assets/quasimorph-running-macos.webp)
+
+*Quasimorph 1.0 running on Apple Silicon macOS from a wrapper produced by this tool.*
+
 ## You need
 
 - Apple Silicon Mac
