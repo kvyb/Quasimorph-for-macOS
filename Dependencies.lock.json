@@ -21,6 +21,14 @@
       "file": "7z2602-mac.tar.xz",
       "url": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602-mac.tar.xz",
       "sha256": "1cf6760579502f87e591ff5c73a005ec50b3e4d6f507e8b038382d563c3175b9"
+    },
+    {
+      "name": "Valve Steam installer",
+      "version": "2026-08-05",
+      "file": "SteamSetup.exe",
+      "url": "https://cdn.cloudflare.steamstatic.com/client/installer/SteamSetup.exe",
+      "sha256": "7d3654531c32d941b8cae81c4137fc542172bfa9635f169cb392f245a0a12bcb",
+      "usage": "Downloaded and verified by the generated Steam wrapper on first launch"
     }
   ]
 }

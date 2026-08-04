@@ -1,6 +1,6 @@
 # Quasimorph for macOS
 
-Builds a macOS app from **your own Windows copy** of Quasimorph.
+Builds a macOS app for **your own Steam or Windows copy** of Quasimorph.
 
 No game files are included here. Nothing is uploaded.
 
@@ -14,7 +14,7 @@ No game files are included here. Nothing is uploaded.
 
 - Apple Silicon Mac
 - macOS 13 or newer
-- Portable Quasimorph copy: RAR, 7Z, ZIP, folder, or `Quasimorph.exe`
+- Quasimorph in your Steam account, or a local Windows copy
 - Internet for the first build
 
 ## Do this
@@ -28,14 +28,35 @@ No game files are included here. Nothing is uploaded.
 cd ~/Downloads/Quasimorph-for-macOS
 ```
 
-5. Type this, add one space, then drag your Quasimorph archive into Terminal:
+## Steam version
+
+**Experimental:** the Steam install/updater flow is verified. Downloading and launching the Steam build of Quasimorph still needs confirmation from someone who owns it on Steam.
+
+Run:
+
+```bash
+./quasimorph-macos steam
+```
+
+Then:
+
+1. Open the DMG created on your Desktop.
+2. Drag `Quasimorph.app` to Applications.
+3. Open it. The official Windows Steam client installs.
+4. Sign in and install Quasimorph when Steam asks.
+5. Open `Quasimorph.app` again to play.
+
+Your password and Steam Guard stay inside Valve's Steam client. The CLI never asks for them.
+
+## Local copy
+
+Type this, add one space, then drag your RAR, ZIP, folder, or `Quasimorph.exe` into Terminal:
 
 ```bash
 ./quasimorph-macos build
 ```
 
-6. Press Return.
-7. Open the DMG created on your Desktop.
+Then press Return and open the DMG created on your Desktop.
 
 Example:
 
@@ -82,9 +103,11 @@ Then retry with details:
 
 ## Important
 
-- Portable Windows copies only. Windows installers and Steam setup are not supported.
+- Steam mode downloads the game through the account that owns it. It does not bypass Steam.
+- Steam remains responsible for Cloud, Workshop, achievements, ownership checks, and updates.
+- Local mode supports RAR, 7Z, ZIP, folders, or `Quasimorph.exe`; other Windows installers are not supported.
 - The tool downloads checksum-verified Sikarugir, Wine, DXMT, and 7-Zip components.
-- The generated DMG contains your game. **Do not redistribute it.**
+- After Steam installs the game, the app contains account-managed game files. **Do not redistribute it.**
 - This is an unofficial compatibility tool. It is not affiliated with Quasimorph or Magnum Scriptum.
 
 ## Build from source

@@ -71,10 +71,21 @@ final class BuilderTests: XCTestCase {
     }
 
     func testLauncherUsesForegroundD3D11AndPrivatePrefix() {
-        XCTAssertTrue(Launcher.script.contains("-force-d3d11"))
-        XCTAssertTrue(Launcher.script.contains("SharedSupport/prefix"))
-        XCTAssertFalse(Launcher.script.contains("NSBGOnly"))
-        XCTAssertFalse(Launcher.script.contains("native,builtin"))
+        let script = Launcher.script(for: .gameFiles(temporary))
+        XCTAssertTrue(script.contains("-force-d3d11"))
+        XCTAssertTrue(script.contains("SharedSupport/prefix"))
+        XCTAssertFalse(script.contains("NSBGOnly"))
+        XCTAssertFalse(script.contains("native,builtin"))
+    }
+
+    func testSteamLauncherUsesOfficialClientAndDoesNotHandleCredentials() {
+        let script = Launcher.script(for: .steam)
+        XCTAssertTrue(script.contains(LockedDependencies.steamInstaller.url.absoluteString))
+        XCTAssertTrue(script.contains(LockedDependencies.steamInstaller.sha256))
+        XCTAssertTrue(script.contains("steam://install/2059170"))
+        XCTAssertTrue(script.contains("-applaunch 2059170"))
+        XCTAssertTrue(script.contains("-force-d3d11"))
+        XCTAssertFalse(script.lowercased().contains("+password"))
     }
 
     func testAppPlistRemovesRetinaFlagForWineMouseInput() throws {
@@ -85,7 +96,7 @@ final class BuilderTests: XCTestCase {
         let input: [String: Any] = ["NSHighResolutionCapable": true]
         try PropertyListSerialization.data(fromPropertyList: input, format: .xml, options: 0).write(to: plistURL)
 
-        let options = BuildOptions(source: temporary, outputDirectory: temporary, cacheDirectory: temporary)
+        let options = BuildOptions(source: .gameFiles(temporary), outputDirectory: temporary, cacheDirectory: temporary)
         try QuasimorphBuilder(options: options).configureInfoPlist(in: app, gameVersion: "1.0")
 
         let data = try Data(contentsOf: plistURL)
@@ -93,6 +104,25 @@ final class BuilderTests: XCTestCase {
             PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
         )
         XCTAssertNil(output["NSHighResolutionCapable"])
+    }
+
+    func testSteamAppPlistTargetsSteam() throws {
+        let app = temporary.appendingPathComponent("Quasimorph.app", isDirectory: true)
+        let contents = app.appendingPathComponent("Contents", isDirectory: true)
+        let plistURL = contents.appendingPathComponent("Info.plist")
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        try PropertyListSerialization.data(fromPropertyList: [:], format: .xml, options: 0).write(to: plistURL)
+
+        let options = BuildOptions(source: .steam, outputDirectory: temporary, cacheDirectory: temporary)
+        try QuasimorphBuilder(options: options).configureInfoPlist(in: app, gameVersion: nil)
+
+        let data = try Data(contentsOf: plistURL)
+        let output = try XCTUnwrap(
+            PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+        )
+        XCTAssertEqual(output["Program Name and Path"] as? String, "/Program Files (x86)/Steam/steam.exe")
+        XCTAssertEqual(output["CFBundleIdentifier"] as? String, "io.github.kvyb.QuasimorphForMacOS.Steam")
+        XCTAssertEqual(output["CFBundleShortVersionString"] as? String, QuasimorphBuilder.version)
     }
 
     func testDependencyLockHasUniqueFilesAndSHA256Values() {

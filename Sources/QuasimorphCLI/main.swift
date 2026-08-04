@@ -5,11 +5,12 @@ import QuasimorphBuilder
 private let help = """
 Quasimorph for macOS \(QuasimorphBuilder.version)
 
-Build a macOS app from your own portable Windows copy of Quasimorph.
+Build a macOS app for your own Windows or Steam copy of Quasimorph.
 
 USAGE
   quasimorph-macos build /absolute/path/Quasimorph.rar
   quasimorph-macos build                         # opens a Finder picker
+  quasimorph-macos steam                         # Steam owns and installs the game
   quasimorph-macos doctor
 
 OPTIONS
@@ -24,8 +25,8 @@ OPTIONS
   -h, --help             Show this help
 
 INPUTS
-  RAR, 7Z, ZIP, an extracted folder, or Quasimorph.exe from a portable copy.
-  Windows installers and Steam automation are intentionally not supported.
+  Local: RAR, 7Z, ZIP, an extracted folder, or Quasimorph.exe.
+  Steam: no file needed. Sign in through Valve's Steam client on first launch.
 """
 
 private func expandedURL(_ path: String, isDirectory: Bool = false) -> URL {
@@ -51,7 +52,7 @@ private func doctor() {
     print("  hdiutil:       \(FileManager.default.isExecutableFile(atPath: "/usr/bin/hdiutil") ? "OK" : "MISSING")")
 }
 
-private func parseBuild(_ rawArguments: [String]) throws -> BuildOptions? {
+private func parseBuild(_ rawArguments: [String], steam: Bool = false) throws -> BuildOptions? {
     var source: URL?
     var output = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Desktop/Quasimorph macOS", isDirectory: true)
@@ -92,15 +93,24 @@ private func parseBuild(_ rawArguments: [String]) throws -> BuildOptions? {
             guard source == nil else {
                 throw BuilderFailure.message("Only one game path can be supplied.")
             }
+            guard !steam else {
+                throw BuilderFailure.message("Steam mode does not take a game path. Use: quasimorph-macos steam")
+            }
             source = expandedURL(argument)
         }
         index += 1
     }
 
-    if source == nil { source = chooseSource() }
-    guard let source else { return nil }
+    let buildSource: BuildSource
+    if steam {
+        buildSource = .steam
+    } else {
+        if source == nil { source = chooseSource() }
+        guard let source else { return nil }
+        buildSource = .gameFiles(source)
+    }
     return BuildOptions(
-        source: source,
+        source: buildSource,
         outputDirectory: output,
         cacheDirectory: cache,
         dependencyDirectory: dependencies,
@@ -121,8 +131,9 @@ do {
     } else if arguments[0] == "doctor" {
         doctor()
     } else {
-        if arguments[0] == "build" { arguments.removeFirst() }
-        if let options = try parseBuild(arguments) {
+        let steam = arguments[0] == "steam"
+        if arguments[0] == "build" || steam { arguments.removeFirst() }
+        if let options = try parseBuild(arguments, steam: steam) {
             _ = try QuasimorphBuilder(options: options).build()
         }
     }
