@@ -77,6 +77,24 @@ final class BuilderTests: XCTestCase {
         XCTAssertFalse(Launcher.script.contains("native,builtin"))
     }
 
+    func testAppPlistRemovesRetinaFlagForWineMouseInput() throws {
+        let app = temporary.appendingPathComponent("Quasimorph.app", isDirectory: true)
+        let contents = app.appendingPathComponent("Contents", isDirectory: true)
+        let plistURL = contents.appendingPathComponent("Info.plist")
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        let input: [String: Any] = ["NSHighResolutionCapable": true]
+        try PropertyListSerialization.data(fromPropertyList: input, format: .xml, options: 0).write(to: plistURL)
+
+        let options = BuildOptions(source: temporary, outputDirectory: temporary, cacheDirectory: temporary)
+        try QuasimorphBuilder(options: options).configureInfoPlist(in: app, gameVersion: "1.0")
+
+        let data = try Data(contentsOf: plistURL)
+        let output = try XCTUnwrap(
+            PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+        )
+        XCTAssertNil(output["NSHighResolutionCapable"])
+    }
+
     func testDependencyLockHasUniqueFilesAndSHA256Values() {
         XCTAssertEqual(Set(LockedDependencies.all.map(\.fileName)).count, LockedDependencies.all.count)
         for dependency in LockedDependencies.all {

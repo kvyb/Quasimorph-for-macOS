@@ -295,7 +295,7 @@ public enum GameLayout {
 }
 
 public final class QuasimorphBuilder {
-    public static let version = "0.1.0"
+    public static let version = "0.1.1"
 
     private let fileManager = FileManager.default
     private let options: BuildOptions
@@ -452,7 +452,7 @@ public final class QuasimorphBuilder {
         return app
     }
 
-    private func configureInfoPlist(in app: URL, gameVersion: String?) throws {
+    func configureInfoPlist(in app: URL, gameVersion: String?) throws {
         let plistURL = app.appendingPathComponent("Contents/Info.plist")
         let data = try Data(contentsOf: plistURL)
         guard var plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
@@ -466,7 +466,6 @@ public final class QuasimorphBuilder {
         plist["CFBundleShortVersionString"] = gameVersion ?? "1.0"
         plist["CFBundleVersion"] = "1"
         plist["LSMinimumSystemVersion"] = "13.0"
-        plist["NSHighResolutionCapable"] = true
         plist["Program Name and Path"] = "/Quasimorph/Quasimorph.exe"
         plist["DXMT"] = 1
         plist["DXVK"] = 0
@@ -477,6 +476,7 @@ public final class QuasimorphBuilder {
 
         let removedKeys = [
             "NSBGOnly", "LSBackgroundOnly", "LSUIElement",
+            "NSHighResolutionCapable",
             "Associations", "CFBundleDocumentTypes", "CLI Custom Commands",
             "NSAppTransportSecurity", "NSMainNibFile", "NSPrincipalClass",
             "NSBluetoothAlwaysUsageDescription", "NSBluetoothPeripheralUsageDescription",
