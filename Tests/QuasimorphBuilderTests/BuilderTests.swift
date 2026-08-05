@@ -134,6 +134,11 @@ final class BuilderTests: XCTestCase {
         }
     }
 
+    func testProcessRunnerWorksWithoutCurrentDirectory() throws {
+        let result = try ProcessRunner().run("/usr/bin/printf", ["ok"])
+        XCTAssertEqual(result.output, "ok")
+    }
+
     private func makeGame(at root: URL) throws {
         try FileManager.default.createDirectory(at: root.appendingPathComponent("Quasimorph_Data"), withIntermediateDirectories: true)
         try Data().write(to: root.appendingPathComponent("Quasimorph.exe"))

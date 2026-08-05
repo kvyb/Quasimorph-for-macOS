@@ -136,7 +136,9 @@ public struct ProcessRunner: Sendable {
         let pipe = Pipe()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
-        process.currentDirectoryURL = currentDirectory
+        if let currentDirectory {
+            process.currentDirectoryURL = currentDirectory
+        }
         process.standardOutput = pipe
         process.standardError = pipe
         process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
@@ -308,7 +310,7 @@ public enum GameLayout {
 }
 
 public final class QuasimorphBuilder {
-    public static let version = "0.2.0"
+    public static let version = "0.2.1"
 
     private let fileManager = FileManager.default
     private let options: BuildOptions
