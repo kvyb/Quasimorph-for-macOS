@@ -30,7 +30,7 @@ cd ~/Downloads/Quasimorph-for-macOS
 
 ## Steam version
 
-**Experimental:** the Steam install/updater flow is verified. Downloading and launching the Steam build of Quasimorph still needs confirmation from someone who owns it on Steam.
+The Steam install/updater flow is verified and works.
 
 Run:
 
