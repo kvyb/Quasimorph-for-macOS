@@ -863,6 +863,7 @@ export WINEDLLOVERRIDES="mscoree,mshtml="
 export WINEESYNC=1
 export WINEMSYNC=1
 export WINEDEBUG=-all
+unset DXMT_LOG_LEVEL DXMT_LOG_PATH
 
 cd "$CONTENTS_DIR/drive_c/Quasimorph" || exit 1
 exec "$CONTENTS_DIR/SharedSupport/wswine/bin/wine" \
@@ -897,6 +898,7 @@ export WINEDLLOVERRIDES="mscoree,mshtml="
 export WINEESYNC=1
 export WINEMSYNC=1
 export WINEDEBUG=-all
+unset DXMT_LOG_LEVEL DXMT_LOG_PATH
 
 show_message() {
   /usr/bin/osascript - "$1" <<'APPLESCRIPT'

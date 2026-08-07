@@ -74,8 +74,13 @@ final class BuilderTests: XCTestCase {
         let script = Launcher.script(for: .gameFiles(temporary))
         XCTAssertTrue(script.contains("-force-d3d11"))
         XCTAssertTrue(script.contains("SharedSupport/prefix"))
+        XCTAssertTrue(script.contains("WINEDEBUG=-all"))
+        XCTAssertTrue(script.contains("unset DXMT_LOG_LEVEL DXMT_LOG_PATH"))
         XCTAssertFalse(script.contains("NSBGOnly"))
         XCTAssertFalse(script.contains("native,builtin"))
+        XCTAssertFalse(script.contains("export DXMT_LOG_LEVEL="))
+        XCTAssertFalse(script.contains("export DXMT_LOG_PATH="))
+        XCTAssertFalse(script.contains("wine.log"))
     }
 
     func testSteamLauncherUsesOfficialClientAndDoesNotHandleCredentials() {
@@ -85,7 +90,12 @@ final class BuilderTests: XCTestCase {
         XCTAssertTrue(script.contains("steam://install/2059170"))
         XCTAssertTrue(script.contains("-applaunch 2059170"))
         XCTAssertTrue(script.contains("-force-d3d11"))
+        XCTAssertTrue(script.contains("WINEDEBUG=-all"))
+        XCTAssertTrue(script.contains("unset DXMT_LOG_LEVEL DXMT_LOG_PATH"))
         XCTAssertFalse(script.lowercased().contains("+password"))
+        XCTAssertFalse(script.contains("export DXMT_LOG_LEVEL="))
+        XCTAssertFalse(script.contains("export DXMT_LOG_PATH="))
+        XCTAssertFalse(script.contains("wine.log"))
     }
 
     func testAppPlistRemovesRetinaFlagForWineMouseInput() throws {
