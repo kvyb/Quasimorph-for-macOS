@@ -22,8 +22,9 @@ jobs:
           mkdir -p dist/Quasimorph-for-macOS
           cp "$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/quasimorph-macos" dist/Quasimorph-for-macOS/
           codesign --force --sign - dist/Quasimorph-for-macOS/quasimorph-macos
-          cp README.md LICENSE THIRD_PARTY_NOTICES.md dist/Quasimorph-for-macOS/
-          COPYFILE_DISABLE=1 ditto -c -k --keepParent dist/Quasimorph-for-macOS Quasimorph-for-macOS.zip
+          cp README.md LICENSE THIRD_PARTY_NOTICES.md Dependencies.lock.json dist/Quasimorph-for-macOS/
+          cp -R assets dist/Quasimorph-for-macOS/
+          ditto --norsrc --noextattr -c -k --keepParent dist/Quasimorph-for-macOS Quasimorph-for-macOS.zip
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:

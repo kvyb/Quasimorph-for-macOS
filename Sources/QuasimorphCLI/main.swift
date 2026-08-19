@@ -46,6 +46,7 @@ private func chooseSource() -> URL? {
 
 private func doctor() {
     print("Quasimorph for macOS doctor")
+    print("  macOS 15+:     \(HostChecks.isSupportedMacOS ? "OK" : "NOT SUPPORTED")")
     print("  Apple Silicon: \(HostChecks.isAppleSilicon ? "OK" : "NOT SUPPORTED")")
     print("  Rosetta 2:     \(HostChecks.hasRosetta ? "OK" : "MISSING")")
     print("  curl:          \(FileManager.default.isExecutableFile(atPath: "/usr/bin/curl") ? "OK" : "MISSING")")

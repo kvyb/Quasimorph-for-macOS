@@ -13,7 +13,7 @@ No game files are included here. Nothing is uploaded.
 ## You need
 
 - Apple Silicon Mac
-- macOS 13 or newer
+- macOS 15 or newer
 - Quasimorph in your Steam account, or a local Windows copy
 - Internet for the first build
 
@@ -87,6 +87,14 @@ If macOS blocks it:
 2. Click **Open**.
 3. Click **Open** again.
 
+## Controls stop after Cmd+Tab?
+
+Rebuild the app with CLI `0.3.0` or newer. Older wrappers used Wine 10, which can lose all mouse and keyboard input after macOS changes focus. The new runtime uses Wine 11.15, where that focus bug is fixed.
+
+If you still use an older build, relaunching the app is the only reliable workaround. Repeatedly switching away and back may restore input, but it is not a permanent fix.
+
+On macOS 13 or 14, use the older `0.2.1` release. It can run there, but it cannot include this Wine 11 fix.
+
 ## Stuck?
 
 Run:
@@ -106,7 +114,7 @@ Then retry with details:
 - Steam mode downloads the game through the account that owns it. It does not bypass Steam.
 - Steam remains responsible for Cloud, Workshop, achievements, ownership checks, and updates.
 - Local mode supports RAR, 7Z, ZIP, folders, or `Quasimorph.exe`; other Windows installers are not supported.
-- The tool downloads checksum-verified Sikarugir, Wine, DXMT, and 7-Zip components.
+- The tool downloads a checksum-verified Sikarugir template, Wine 11.15 runtime, DXVK-macOS, and 7-Zip helper.
 - After Steam installs the game, the app contains account-managed game files. **Do not redistribute it.**
 - This is an unofficial compatibility tool. It is not affiliated with Quasimorph or Magnum Scriptum.
 

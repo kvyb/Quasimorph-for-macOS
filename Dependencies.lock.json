@@ -9,11 +9,11 @@
       "sha256": "9fa15479e7ff6abd99c1d07be285fb95f41fc6991586502427152b1f7d6ccb8a"
     },
     {
-      "name": "Sikarugir Wine engine",
-      "version": "WS12WineSikarugir10.0_6",
-      "file": "WS12WineSikarugir10.0_6.tar.xz",
-      "url": "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineSikarugir10.0_6.tar.xz",
-      "sha256": "9da7ee0cbf386522f3a9906943726d9c3c125dbbd9ab120e3cde80e88d6091b2"
+      "name": "Whisky Wine runtime",
+      "version": "Wine 11.15 / Whisky 4.5.105-beta.1",
+      "file": "Whisky-Libraries-v4.5.105-beta.1.tar.gz",
+      "url": "https://github.com/frankea/Whisky/releases/download/v4.5.105-beta.1/Libraries.tar.gz",
+      "sha256": "43d78bec577166b5f64b1903f92582e673fbb142ad23921550f77cfeb9ffe0ce"
     },
     {
       "name": "7-Zip archive helper",

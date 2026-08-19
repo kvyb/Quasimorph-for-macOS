@@ -75,11 +75,14 @@ final class BuilderTests: XCTestCase {
         XCTAssertTrue(script.contains("-force-d3d11"))
         XCTAssertTrue(script.contains("SharedSupport/prefix"))
         XCTAssertTrue(script.contains("WINEDEBUG=-all"))
-        XCTAssertTrue(script.contains("unset DXMT_LOG_LEVEL DXMT_LOG_PATH"))
+        XCTAssertTrue(script.contains("WINEDLLOVERRIDES=\"dxgi,d3d11,d3d10core=n,b;mscoree,mshtml=\""))
+        XCTAssertTrue(script.contains("DXVK_LOG_LEVEL=none"))
+        XCTAssertTrue(script.contains("MVK_CONFIG_LOG_LEVEL=0"))
+        XCTAssertTrue(script.contains("WINDOWS_USER"))
         XCTAssertFalse(script.contains("NSBGOnly"))
         XCTAssertFalse(script.contains("native,builtin"))
-        XCTAssertFalse(script.contains("export DXMT_LOG_LEVEL="))
-        XCTAssertFalse(script.contains("export DXMT_LOG_PATH="))
+        XCTAssertFalse(script.contains("DXMT_LOG_LEVEL"))
+        XCTAssertFalse(script.contains("DXMT_LOG_PATH"))
         XCTAssertFalse(script.contains("wine.log"))
     }
 
@@ -91,10 +94,13 @@ final class BuilderTests: XCTestCase {
         XCTAssertTrue(script.contains("-applaunch 2059170"))
         XCTAssertTrue(script.contains("-force-d3d11"))
         XCTAssertTrue(script.contains("WINEDEBUG=-all"))
-        XCTAssertTrue(script.contains("unset DXMT_LOG_LEVEL DXMT_LOG_PATH"))
+        XCTAssertTrue(script.contains("WINEDLLOVERRIDES=\"dxgi,d3d11,d3d10core=n,b;mscoree,mshtml=\""))
+        XCTAssertTrue(script.contains("DXVK_LOG_LEVEL=none"))
+        XCTAssertTrue(script.contains("MVK_CONFIG_LOG_LEVEL=0"))
+        XCTAssertTrue(script.contains("WINDOWS_USER"))
         XCTAssertFalse(script.lowercased().contains("+password"))
-        XCTAssertFalse(script.contains("export DXMT_LOG_LEVEL="))
-        XCTAssertFalse(script.contains("export DXMT_LOG_PATH="))
+        XCTAssertFalse(script.contains("DXMT_LOG_LEVEL"))
+        XCTAssertFalse(script.contains("DXMT_LOG_PATH"))
         XCTAssertFalse(script.contains("wine.log"))
     }
 
@@ -114,6 +120,9 @@ final class BuilderTests: XCTestCase {
             PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
         )
         XCTAssertNil(output["NSHighResolutionCapable"])
+        XCTAssertEqual(output["DXVK"] as? Int, 1)
+        XCTAssertEqual(output["DXMT"] as? Int, 0)
+        XCTAssertEqual(output["LSMinimumSystemVersion"] as? String, "15.0")
     }
 
     func testSteamAppPlistTargetsSteam() throws {

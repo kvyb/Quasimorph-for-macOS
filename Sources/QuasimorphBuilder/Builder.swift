@@ -38,11 +38,11 @@ public enum LockedDependencies {
     )
 
     public static let engine = LockedDependency(
-        name: "Sikarugir Wine engine",
-        fileName: "WS12WineSikarugir10.0_6.tar.xz",
-        version: "WS12WineSikarugir10.0_6",
-        url: URL(string: "https://github.com/Sikarugir-App/Engines/releases/download/v1.0/WS12WineSikarugir10.0_6.tar.xz")!,
-        sha256: "9da7ee0cbf386522f3a9906943726d9c3c125dbbd9ab120e3cde80e88d6091b2"
+        name: "Whisky Wine runtime",
+        fileName: "Whisky-Libraries-v4.5.105-beta.1.tar.gz",
+        version: "Wine 11.15 / Whisky 4.5.105-beta.1",
+        url: URL(string: "https://github.com/frankea/Whisky/releases/download/v4.5.105-beta.1/Libraries.tar.gz")!,
+        sha256: "43d78bec577166b5f64b1903f92582e673fbb142ad23921550f77cfeb9ffe0ce"
     )
 
     public static let sevenZip = LockedDependency(
@@ -173,6 +173,10 @@ private func shellQuoted(_ value: String) -> String {
 }
 
 public enum HostChecks {
+    public static var isSupportedMacOS: Bool {
+        ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 15
+    }
+
     public static var isAppleSilicon: Bool {
         #if arch(arm64)
         return true
@@ -310,7 +314,7 @@ public enum GameLayout {
 }
 
 public final class QuasimorphBuilder {
-    public static let version = "0.2.1"
+    public static let version = "0.3.0"
 
     private let fileManager = FileManager.default
     private let options: BuildOptions
@@ -374,8 +378,8 @@ public final class QuasimorphBuilder {
         print("[4/7] Initializing private Wine data")
         try initializePrefix(in: app)
 
-        print("[5/7] Installing DXMT and locking file access")
-        try installDXMT(in: app)
+        print("[5/7] Installing DXVK and locking file access")
+        try installDXVK(in: app)
         try hardenPrefix(in: app)
         if let gameRoot {
             try copyGame(from: gameRoot, into: app)
@@ -394,6 +398,11 @@ public final class QuasimorphBuilder {
     }
 
     private func preflight() throws {
+        guard HostChecks.isSupportedMacOS else {
+            throw BuilderFailure.message(
+                "Wine 11 requires macOS 15 or newer. On macOS 13 or 14, use release v0.2.1; it does not include the Cmd+Tab fix."
+            )
+        }
         guard HostChecks.isAppleSilicon else {
             throw BuilderFailure.message("This first release supports Apple Silicon Macs only.")
         }
@@ -467,12 +476,18 @@ public final class QuasimorphBuilder {
         }
         try fileManager.moveItem(at: originalApp, to: app)
 
-        let engine = engineRoot.appendingPathComponent("wswine.bundle", isDirectory: true)
+        let engine = engineRoot.appendingPathComponent("Libraries/Wine", isDirectory: true)
+        let dxvk = engineRoot.appendingPathComponent("Libraries/DXVK", isDirectory: true)
         let installedEngine = app.appendingPathComponent("Contents/SharedSupport/wswine", isDirectory: true)
+        let installedDXVK = app.appendingPathComponent("Contents/SharedSupport/dxvk", isDirectory: true)
         guard fileManager.fileExists(atPath: engine.path) else {
-            throw BuilderFailure.message("Verified engine did not contain wswine.bundle.")
+            throw BuilderFailure.message("Verified runtime did not contain Libraries/Wine.")
+        }
+        guard fileManager.fileExists(atPath: dxvk.appendingPathComponent("x64/d3d11.dll").path) else {
+            throw BuilderFailure.message("Verified runtime did not contain DXVK for macOS.")
         }
         try runner.run("/usr/bin/ditto", [engine.path, installedEngine.path])
+        try runner.run("/usr/bin/ditto", [dxvk.path, installedDXVK.path])
 
         try configureInfoPlist(in: app, gameVersion: gameVersion)
         try installLauncher(in: app)
@@ -495,15 +510,15 @@ public final class QuasimorphBuilder {
         plist["CFBundleDisplayName"] = "Quasimorph"
         plist["CFBundleShortVersionString"] = gameVersion ?? Self.version
         plist["CFBundleVersion"] = "1"
-        plist["LSMinimumSystemVersion"] = "13.0"
+        plist["LSMinimumSystemVersion"] = "15.0"
         switch options.source {
         case .gameFiles:
             plist["Program Name and Path"] = "/Quasimorph/Quasimorph.exe"
         case .steam:
             plist["Program Name and Path"] = "/Program Files (x86)/Steam/steam.exe"
         }
-        plist["DXMT"] = 1
-        plist["DXVK"] = 0
+        plist["DXMT"] = 0
+        plist["DXVK"] = 1
         plist["D3DMETAL"] = 0
         plist["MOLTENVKCX"] = 0
         plist["Symlinks In User Folder"] = 0
@@ -548,19 +563,19 @@ public final class QuasimorphBuilder {
         try runner.run(wineserver.path, ["-w"], environment: environment)
     }
 
-    private func installDXMT(in app: URL) throws {
+    private func installDXVK(in app: URL) throws {
         let contents = app.appendingPathComponent("Contents", isDirectory: true)
-        let source = contents.appendingPathComponent("Frameworks/renderer/dxmt/wine", isDirectory: true)
-        let wineLibrary = contents.appendingPathComponent("SharedSupport/wswine/lib/wine", isDirectory: true)
+        let source = contents.appendingPathComponent("SharedSupport/dxvk", isDirectory: true)
         let system32 = contents.appendingPathComponent("SharedSupport/prefix/drive_c/windows/system32", isDirectory: true)
         let syswow64 = contents.appendingPathComponent("SharedSupport/prefix/drive_c/windows/syswow64", isDirectory: true)
 
-        guard fileManager.fileExists(atPath: source.appendingPathComponent("x86_64-unix/winemetal.so").path) else {
-            throw BuilderFailure.message("The wrapper's DXMT payload is incomplete.")
+        guard fileManager.fileExists(atPath: source.appendingPathComponent("x64/d3d11.dll").path),
+              fileManager.fileExists(atPath: source.appendingPathComponent("x32/d3d11.dll").path)
+        else {
+            throw BuilderFailure.message("The verified runtime's DXVK payload is incomplete.")
         }
-        try overlay(source: source, destination: wineLibrary)
-        try copyDLLs(from: source.appendingPathComponent("x86_64-windows"), to: system32)
-        try copyDLLs(from: source.appendingPathComponent("i386-windows"), to: syswow64)
+        try copyDLLs(from: source.appendingPathComponent("x64"), to: system32)
+        try copyDLLs(from: source.appendingPathComponent("x32"), to: syswow64)
     }
 
     private func hardenPrefix(in app: URL) throws {
@@ -613,8 +628,10 @@ public final class QuasimorphBuilder {
         guard plist?["NSBGOnly"] == nil else {
             throw BuilderFailure.message("Verification failed: NSBGOnly is still present.")
         }
-        guard fileManager.fileExists(atPath: app.appendingPathComponent("Contents/SharedSupport/wswine/lib/wine/x86_64-unix/winemetal.so").path) else {
-            throw BuilderFailure.message("Verification failed: DXMT is missing.")
+        guard fileManager.fileExists(atPath: app.appendingPathComponent("Contents/SharedSupport/dxvk/x64/d3d11.dll").path),
+              fileManager.fileExists(atPath: app.appendingPathComponent("Contents/SharedSupport/prefix/drive_c/windows/system32/d3d11.dll").path)
+        else {
+            throw BuilderFailure.message("Verification failed: DXVK is missing.")
         }
         if case .gameFiles = options.source {
             guard fileManager.fileExists(atPath: app.appendingPathComponent("Contents/drive_c/Quasimorph/Quasimorph.exe").path) else {
@@ -690,8 +707,8 @@ public final class QuasimorphBuilder {
             "Template SHA-256: \(LockedDependencies.template.sha256)",
             "Engine: \(LockedDependencies.engine.version)",
             "Engine SHA-256: \(LockedDependencies.engine.sha256)",
-            "DXMT: v0.74 from the verified template",
-            "Renderer: DXMT / Direct3D 11",
+            "DXVK: 1.10.3 macOS build from the verified runtime",
+            "Renderer: DXVK / Direct3D 11",
             "Host drive mappings: C: only",
             "Code signature: ad hoc, verified",
             "Game launched during build: no"
@@ -712,40 +729,15 @@ public final class QuasimorphBuilder {
         [
             "WINEPREFIX": contents.appendingPathComponent("SharedSupport/prefix").path,
             "PATH": contents.appendingPathComponent("SharedSupport/wswine/bin").path + ":/usr/bin:/bin",
-            "DYLD_FALLBACK_LIBRARY_PATH": contents.appendingPathComponent("Frameworks").path,
-            "WINEDLLOVERRIDES": "mscoree,mshtml=",
+            "DYLD_FALLBACK_LIBRARY_PATH": contents.appendingPathComponent("SharedSupport/wswine/lib").path + ":" + contents.appendingPathComponent("Frameworks").path,
+            "WINEDLLOVERRIDES": "dxgi,d3d11,d3d10core=n,b;mscoree,mshtml=",
             "WINEARCH": "win64",
             "WINEESYNC": "1",
             "WINEMSYNC": "1",
-            "WINEDEBUG": "-all"
+            "WINEDEBUG": "-all",
+            "DXVK_LOG_LEVEL": "none",
+            "MVK_CONFIG_LOG_LEVEL": "0"
         ]
-    }
-
-    private func overlay(source: URL, destination: URL) throws {
-        let canonicalSource = source.resolvingSymlinksInPath()
-        guard let enumerator = fileManager.enumerator(
-            at: canonicalSource,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else { return }
-
-        for case let item as URL in enumerator {
-            let sourceComponents = canonicalSource.pathComponents
-            let itemComponents = item.resolvingSymlinksInPath().pathComponents
-            guard itemComponents.starts(with: sourceComponents) else {
-                throw BuilderFailure.message("DXMT payload escaped its expected directory.")
-            }
-            let relative = itemComponents.dropFirst(sourceComponents.count).joined(separator: "/")
-            let target = destination.appendingPathComponent(relative)
-            let isDirectory = try item.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true
-            if isDirectory {
-                try fileManager.createDirectory(at: target, withIntermediateDirectories: true)
-            } else {
-                try fileManager.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try? fileManager.removeItem(at: target)
-                try fileManager.copyItem(at: item, to: target)
-            }
-        }
     }
 
     private func copyDLLs(from source: URL, to destination: URL) throws {
@@ -851,25 +843,34 @@ public enum Launcher {
 #!/bin/sh
 
 CONTENTS_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-USER_NAME="$(id -un)"
-LOG_DIR="$CONTENTS_DIR/SharedSupport/prefix/drive_c/users/$USER_NAME/AppData/LocalLow/Quasimorph-macOS"
+PREFIX="$CONTENTS_DIR/SharedSupport/prefix"
+WINDOWS_USER=""
+for USER_DIR in "$PREFIX"/drive_c/users/*; do
+  [ -d "$USER_DIR" ] || continue
+  [ "$(basename "$USER_DIR")" = "Public" ] && continue
+  WINDOWS_USER="$(basename "$USER_DIR")"
+  break
+done
+[ -n "$WINDOWS_USER" ] || WINDOWS_USER="$(id -un)"
+LOG_DIR="$PREFIX/drive_c/users/$WINDOWS_USER/AppData/LocalLow/Quasimorph-macOS"
 
 mkdir -p "$LOG_DIR"
 
-export WINEPREFIX="$CONTENTS_DIR/SharedSupport/prefix"
+export WINEPREFIX="$PREFIX"
 export PATH="$CONTENTS_DIR/SharedSupport/wswine/bin:/usr/bin:/bin"
-export DYLD_FALLBACK_LIBRARY_PATH="$CONTENTS_DIR/Frameworks"
-export WINEDLLOVERRIDES="mscoree,mshtml="
+export DYLD_FALLBACK_LIBRARY_PATH="$CONTENTS_DIR/SharedSupport/wswine/lib:$CONTENTS_DIR/Frameworks"
+export WINEDLLOVERRIDES="dxgi,d3d11,d3d10core=n,b;mscoree,mshtml="
 export WINEESYNC=1
 export WINEMSYNC=1
 export WINEDEBUG=-all
-unset DXMT_LOG_LEVEL DXMT_LOG_PATH
+export DXVK_LOG_LEVEL=none
+export MVK_CONFIG_LOG_LEVEL=0
 
 cd "$CONTENTS_DIR/drive_c/Quasimorph" || exit 1
 exec "$CONTENTS_DIR/SharedSupport/wswine/bin/wine" \
   'C:\Quasimorph\Quasimorph.exe' \
   -force-d3d11 \
-  -logFile "C:\\users\\$USER_NAME\\AppData\\LocalLow\\Quasimorph-macOS\\Player.log" \
+  -logFile "C:\\users\\$WINDOWS_USER\\AppData\\LocalLow\\Quasimorph-macOS\\Player.log" \
   "$@"
 """#
 
@@ -888,17 +889,26 @@ WINE="$CONTENTS_DIR/SharedSupport/wswine/bin/wine"
 STEAM_DIR="$PREFIX/drive_c/Program Files (x86)/Steam"
 STEAM_EXE="$STEAM_DIR/steam.exe"
 GAME_EXE="$STEAM_DIR/steamapps/common/Quasimorph/Quasimorph.exe"
-SETUP_DIR="$PREFIX/drive_c/users/$(id -un)/AppData/Local/Temp"
+WINDOWS_USER=""
+for USER_DIR in "$PREFIX"/drive_c/users/*; do
+  [ -d "$USER_DIR" ] || continue
+  [ "$(basename "$USER_DIR")" = "Public" ] && continue
+  WINDOWS_USER="$(basename "$USER_DIR")"
+  break
+done
+[ -n "$WINDOWS_USER" ] || WINDOWS_USER="$(id -un)"
+SETUP_DIR="$PREFIX/drive_c/users/$WINDOWS_USER/AppData/Local/Temp"
 SETUP="$SETUP_DIR/SteamSetup.exe"
 
 export WINEPREFIX="$PREFIX"
 export PATH="$CONTENTS_DIR/SharedSupport/wswine/bin:/usr/bin:/bin"
-export DYLD_FALLBACK_LIBRARY_PATH="$CONTENTS_DIR/Frameworks"
-export WINEDLLOVERRIDES="mscoree,mshtml="
+export DYLD_FALLBACK_LIBRARY_PATH="$CONTENTS_DIR/SharedSupport/wswine/lib:$CONTENTS_DIR/Frameworks"
+export WINEDLLOVERRIDES="dxgi,d3d11,d3d10core=n,b;mscoree,mshtml="
 export WINEESYNC=1
 export WINEMSYNC=1
 export WINEDEBUG=-all
-unset DXMT_LOG_LEVEL DXMT_LOG_PATH
+export DXVK_LOG_LEVEL=none
+export MVK_CONFIG_LOG_LEVEL=0
 
 show_message() {
   /usr/bin/osascript - "$1" <<'APPLESCRIPT'
@@ -963,7 +973,7 @@ private enum DmgReadme {
             3. If macOS blocks the first launch, right-click the app and choose Open.
 
             Logs:
-            Quasimorph.app/Contents/SharedSupport/prefix/drive_c/users/<you>/AppData/LocalLow/Quasimorph-macOS/Player.log
+            Quasimorph.app/Contents/SharedSupport/prefix/drive_c/users/crossover/AppData/LocalLow/Quasimorph-macOS/Player.log
 
             This is an unofficial compatibility wrapper built from your own Windows copy.
             Do not redistribute this DMG: it contains your copy of the game.
