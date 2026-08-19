@@ -95,6 +95,18 @@ If you still use an older build, relaunching the app is the only reliable workar
 
 On macOS 13 or 14, use the older `0.2.1` release. It can run there, but it cannot include this Wine 11 fix.
 
+## Updating an existing app
+
+Back up your saves before replacing `Quasimorph.app`:
+
+1. Right-click the old app and choose **Show Package Contents**.
+2. Open `Contents/SharedSupport/prefix/drive_c/users/<your user>/AppData/LocalLow/`.
+3. Copy the `Magnum Scriptum LTD` folder somewhere safe.
+4. Build and open the new app once, then quit it.
+5. Put the backup in the new app under `Contents/SharedSupport/prefix/drive_c/users/crossover/AppData/LocalLow/`.
+
+Steam Cloud may restore saves automatically, but make the backup anyway.
+
 ## Stuck?
 
 Run:
